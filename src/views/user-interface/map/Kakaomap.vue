@@ -60,7 +60,7 @@
             <tbody>
               <tr v-for="item in homeTables" :key="item.name">
                 <td>
-                  <a v-on:click.prevent="setCenterInMap(item.lat, item.lng)">&nbsp;&nbsp;{{ item.aptName }}</a>
+                  <a v-on:click.prevent="setCenterInMap(item)">&nbsp;&nbsp;{{ item.aptName }}</a>
                 </td>
                 <td>{{ item.jibun }}</td>
               </tr>
@@ -79,12 +79,12 @@
     <v-dialog v-model="dialog">
       <v-card class="modal">
         <p>아파트 상세 정보</p>
-        <h1>🏠 일성 빌라트</h1>
-        주소 : {{ this.address }} {{ this.homeTables[0].jibun }} <br />
-        건축년도 : {{ this.homeTables[0].buildYear }} <br />
+        <h1>🏠 {{ this.homeInfo.aptName }}</h1>
+        주소 : {{ this.address }} {{ this.homeInfo.jibun }} <br />
+        건축년도 : {{ this.homeInfo.buildYear }} <br />
         <br />
         <h3>거래 내역</h3>
-        <v-table fixed-header height="420px">
+        <v-table fixed-header height="350px">
           <thead>
             <tr>
               <th class="text-left">거래일</th>
@@ -94,11 +94,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in homeTables" :key="item.name">
-              <td>2020년 10월 28일</td>
-              <td>59.9m² (18평)</td>
-              <td>1억 6,500만원</td>
-              <td>16층</td>
+            <tr v-for="item in homeDeals" :key="item.name">
+              <td>{{ item.dealYear }}년 {{ item.dealMonth }}월 {{ item.dealDay }}일</td>
+              <td>{{ item.area }}m² ({{ (item.area / 3.3).toFixed(1) }}평)</td>
+              <td>
+                {{ item.dealAmount.split(',').join('').substring(0, 5) }}억
+                {{ item.dealAmount.split(',').join('').slice(-4) }}만원
+              </td>
+              <td>{{ item.floor }}층</td>
             </tr>
           </tbody>
         </v-table>
@@ -243,6 +246,8 @@ export default {
         },
       ],
       homeInfos: [], // [아파트의 이름, 아파트 코드]
+      homeInfo: {}, // 아파트 하나의 정보가 담겨있는 변수
+      homeDeals: [], // 거래내역이 담겨있는 배열
       eduInfos: [], //
       transportInfos: [],
       mediInfos: [],
@@ -266,9 +271,6 @@ export default {
       lng: 127.03937835966009,
       dongCode: 1168010100,
       address: '서울특별시 강남구 역삼동',
-      homeInfoAptName: '안녕',
-      homeInfoBuildYear: '하세',
-      homeInfoJibun: '요오',
       imgSrc: 'https://i.ibb.co/m0VTfjT/image.jpg',
     }
   },
@@ -285,13 +287,27 @@ export default {
   },
   methods: {
     //아파트 리스트에서 아파트 이름을 클릭했을 때 마커 중심을 옮기는 기능
-    setCenterInMap(lat, lng) {
-      var moveLatLon = new kakao.maps.LatLng(lat, lng)
+    setCenterInMap(item) {
+      var moveLatLon = new kakao.maps.LatLng(item.lat, item.lng)
       // 지도 중심을 이동 시킵니다
       this.map.panTo(moveLatLon)
       //현재 위도 경도 갱신
       this.updateLatLng()
+      this.homeInfo = item
       this.dialog = true
+
+      //집 거래 정보 불러와야함
+      http
+        .get(`home/apt/${item.aptCode}`)
+        .then(({ data }) => {
+          console.log(data)
+          this.homeDeals = data
+          // `${this.homeInfo}` = data
+          console.log('homeDeals', this.homeDeals)
+        })
+        .catch(({ response }) => {
+          alert(response.data)
+        })
     },
 
     //학군 버튼 눌렀을 때마다 마커 표시하고 끄는 기능
@@ -919,36 +935,21 @@ export default {
 
           // 마커에 마우스클릭 이벤트를 등록합니다
           kakao.maps.event.addListener(marker, 'click', function () {
-            var dongCode = marker.getTitle()
-            console.log('해당 집의 집코드 : ', dongCode)
-            //집 정보 불러와야함
-            http
-              .get(`home/apt/${dongCode}`)
-              .then(({ data }) => {
-                console.log(data)
-                this.homeInfoAptName = data.aptName
-                this.homeInfoJibun = data.jibun
-                this.homeInfoBuildYear = data.buildYear
-                console.log(this.homeInfoAptName)
-                console.log(this.homeInfoJibun)
-                console.log(this.homeInfoBuildYear)
-                //아파트 이미지 불러오기
-                http
-                  .get(`home/aptimage/${data.aptName}`)
-                  .then(({ data }) => {
-                    console.log(data)
-                    console.log(data.items[0])
-                    console.log(data.items[0].thumbnail)
-                    this.imgSrc = data.items[0].thumbnail
-                  })
-                  .catch(({ response }) => {
-                    alert(response.data)
-                  })
-              })
-              .catch(({ response }) => {
-                alert(response.data)
-              })
-            console.log(this.homeInfo.aptName)
+            infowindow.close()
+            // var dongCode = marker.getTitle()
+            // this.dialog = true
+            // console.log('dialog ', this.dialog)
+            // //집 정보 불러와야함
+            // http
+            //   .get(`home/apt/${dongCode}`)
+            //   .then(({ data }) => {
+            //     console.log(data)
+            //     // `${this.homeInfo}` = data
+            //     console.log('homeInfo', this.homeInfo)
+            //   })
+            //   .catch(({ response }) => {
+            //     alert(response.data)
+            //   })
 
             //집 이미지 불러오기 CORS 떠서 안옴..;
             // axios.get(
@@ -1088,20 +1089,20 @@ div.right {
 }
 
 .w-btn-green {
-  background-color: #41b991;
-  color: #d7fff1;
+  background-color: #b688d6;
+  color: #fdfaff;
 }
 
 .w-btn-selected {
-  background-color: #30463f;
-  color: #d7fff1;
+  background-color: #483a53;
+  color: #f1d7ff;
   letter-spacing: 2px;
   transform: scale(0.8);
 }
 
 .w-btn-delete {
-  background-color: #375249;
-  color: #d7fff1;
+  background-color: #4e3e58;
+  color: #ffffff;
 }
 /* .w-btn {
     letter-spacing: 2px;
@@ -1110,7 +1111,7 @@ div.right {
 } */
 
 .modal {
-  width: 50%;
+  width: 60%;
   margin-left: auto;
   margin-right: auto;
   padding: 60px;
