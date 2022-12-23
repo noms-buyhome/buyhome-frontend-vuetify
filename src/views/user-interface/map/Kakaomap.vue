@@ -2,6 +2,7 @@
   <VCard>
     <VCardText>
       <VRow>
+        <!-- 화면 왼쪽 지도 출력 start -->
         <VCol cols="8">
           <div>
             <div class="btn-group">
@@ -45,11 +46,67 @@
             <div id="map" @mouseup="updateLatLng()"></div>
           </div>
         </VCol>
+        <!-- 화면 왼쪽 지도 출력 end -->
+
+        <!-- 화면 오른쪽 매물 리스트 출력 start -->
         <VCol cols="4">
-          <img src="./images/icon-medi.png" alt="img태그다잉?" />
+          <v-table fixed-header height="580px">
+            <thead>
+              <tr>
+                <th class="text-left">아파트이름</th>
+                <th class="text-left">지번</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in homeTables" :key="item.name">
+                <td>
+                  <a v-on:click.prevent="setCenterInMap(item.lat, item.lng)">&nbsp;&nbsp;{{ item.aptName }}</a>
+                </td>
+                <td>{{ item.jibun }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+          <!-- <div v-if="homeTables.length > 0">
+            <v-data-table :headers="headers" :items="homeTables" :items-per-page="5" class="elevation-1"></v-data-table>
+          </div>
+          <div v-else>
+            <img src="./images/icon-medi.png" alt="img태그다잉?" />
+          </div> -->
         </VCol>
+        <!-- 화면 오른쪽 매물 리스트 출력 end -->
       </VRow>
     </VCardText>
+    <v-dialog v-model="dialog">
+      <v-card class="modal">
+        <p>아파트 상세 정보</p>
+        <h1>🏠 일성 빌라트</h1>
+        주소 : {{ this.address }} {{ this.homeTables[0].jibun }} <br />
+        건축년도 : {{ this.homeTables[0].buildYear }} <br />
+        <br />
+        <h3>거래 내역</h3>
+        <v-table fixed-header height="420px">
+          <thead>
+            <tr>
+              <th class="text-left">거래일</th>
+              <th class="text-left">면적</th>
+              <th class="text-left">금액</th>
+              <th class="text-left">층수</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in homeTables" :key="item.name">
+              <td>2020년 10월 28일</td>
+              <td>59.9m² (18평)</td>
+              <td>1억 6,500만원</td>
+              <td>16층</td>
+            </tr>
+          </tbody>
+        </v-table>
+        <v-card-actions>
+          <v-btn color="primary" block @click="dialog = false">닫기</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </VCard>
 </template>
 
@@ -61,7 +118,7 @@ export default {
   name: 'KakaoMap',
   data() {
     return {
-      isModalViewed: false,
+      dialog: false,
       markerPositions1: [
         [33.452278, 126.567803],
         [33.452671, 126.574792],
@@ -77,6 +134,114 @@ export default {
         [37.49646391248451, 127.02675574250912],
       ],
       markerPositions3: [],
+      headers: [
+        {
+          text: '아파트 이름',
+          value: 'aptName',
+        },
+        { text: '아파트 코드', value: 'aptCode' },
+      ],
+      homeTables: [
+        {
+          aptCode: 15,
+          buildYear: 2004,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '179-5',
+          lat: '37.6069685',
+          lng: '126.9675741',
+          aptName: '에지앙빌',
+        },
+        {
+          aptCode: 16,
+          buildYear: 2001,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '72',
+          lat: '37.6091837',
+          lng: '126.9756868',
+          aptName: '롯데낙천대',
+        },
+        {
+          aptCode: 17,
+          buildYear: 1998,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '596',
+          lat: '37.6109493',
+          lng: '126.9786561',
+          aptName: '삼성',
+        },
+        {
+          aptCode: 18,
+          buildYear: 2004,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '45',
+          lat: '37.6080961',
+          lng: '126.9737175',
+          aptName: '벽산블루밍평창힐스',
+        },
+        {
+          aptCode: 32,
+          buildYear: 2009,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '108',
+          lat: '37.6098407',
+          lng: '126.9774707',
+          aptName: '롯데캐슬 로잔',
+        },
+        {
+          aptCode: 33,
+          buildYear: 1997,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '595',
+          lat: '37.6046031',
+          lng: '126.9637494',
+          aptName: '갑을',
+        },
+        {
+          aptCode: 57,
+          buildYear: 1996,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '145-5',
+          lat: '37.60901',
+          lng: '126.9728101',
+          aptName: '일성빌라트',
+        },
+        {
+          aptCode: 81,
+          buildYear: 2005,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '33-1',
+          lat: '37.6075659',
+          lng: '126.9733623',
+          aptName: '형우럭스빌(33-1)',
+        },
+        {
+          aptCode: 88,
+          buildYear: 2009,
+          dongCode: '1111018300',
+          dongName: '평창동',
+          img: null,
+          jibun: '66-1',
+          lat: '37.60964300000001',
+          lng: '126.9758708',
+          aptName: '엘리시아',
+        },
+      ],
       homeInfos: [], // [아파트의 이름, 아파트 코드]
       eduInfos: [], //
       transportInfos: [],
@@ -119,6 +284,16 @@ export default {
     }
   },
   methods: {
+    //아파트 리스트에서 아파트 이름을 클릭했을 때 마커 중심을 옮기는 기능
+    setCenterInMap(lat, lng) {
+      var moveLatLon = new kakao.maps.LatLng(lat, lng)
+      // 지도 중심을 이동 시킵니다
+      this.map.panTo(moveLatLon)
+      //현재 위도 경도 갱신
+      this.updateLatLng()
+      this.dialog = true
+    },
+
     //학군 버튼 눌렀을 때마다 마커 표시하고 끄는 기능
     foodToggle() {
       this.foodSwitch = !this.foodSwitch
@@ -634,6 +809,7 @@ export default {
       http
         .get(`home/${dongCode}`)
         .then(({ data }) => {
+          this.homeTables = data
           // console.log('[actions]................................getResults:', data);
           if (data.length > 0) {
             var arr2 = new Array() //2차원 배열 선언
@@ -865,7 +1041,7 @@ export default {
 <style scoped>
 #map {
   width: 100%;
-  height: 400px;
+  height: 550px;
 }
 
 .btn-group {
@@ -932,4 +1108,17 @@ div.right {
     transform: scale(0.7);
     cursor: pointer;
 } */
+
+.modal {
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 60px;
+  padding-bottom: 0px;
+}
+
+.homeDetailIcon {
+  width: 5%;
+  height: 5%;
+}
 </style>
